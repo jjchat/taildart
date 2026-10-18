@@ -704,11 +704,8 @@ def _coerce_forecast_start(value) -> pd.Timestamp:
 
 
 def _compute_tilde_q_metric(actual: np.ndarray, pred: np.ndarray) -> float:
-    """Import and compute TILDE-Q lazily so notebook path setup can happen first."""
-    try:
-        from taildart.utils.tilde_q import compute_tilde_q
-    except ImportError:
-        from utils.tilde_q import compute_tilde_q
+    """Compute TILDE-Q using the bundled implementation."""
+    from taildart.utils.tilde_q import compute_tilde_q
 
     return float(compute_tilde_q(y_true=actual, y_pred=pred))
 
@@ -1097,6 +1094,9 @@ def compute_metrics(
     )
     try:
         tilde_q = _compute_tilde_q_metric(actual=actual, pred=pred)
+    except ImportError:
+        # Packaging/dependency errors must not silently erase an entire metric.
+        raise
     except Exception:
         tilde_q = np.nan
 
