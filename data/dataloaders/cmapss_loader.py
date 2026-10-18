@@ -1,4 +1,4 @@
-"""CMAPSS dataset loader helpers for Lag-Gemma pretraining."""
+"""CMAPSS dataset loader helpers for TailDart pretraining."""
 
 from __future__ import annotations
 

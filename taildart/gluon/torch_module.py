@@ -1,7 +1,7 @@
 # Copyright 2024 Arjun Ashok
 # Modifications Copyright 2026 Chiang Qin Zhi
 #
-# Modified as part of Lag-Gemma project (replacing LLaMA with Gemma backbone)
+# Modified as part of TailDart project (replacing LLaMA with Gemma backbone)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,11 +40,11 @@ from data.augmentations.augmentations import (
     WindowSlice,
     WindowWarp,
 )
-from src.model.gemma_module import LagGemmaModel
+from taildart.model.taildart_module import TailDartModel
 
 
-class LagGemmaModule(nn.Module):
-    """Pure-PyTorch wrapper around LagGemmaModel for training and inference."""
+class TailDartModule(nn.Module):
+    """Pure-PyTorch wrapper around TailDartModel for training and inference."""
 
     @validated()
     def __init__(
@@ -90,7 +90,7 @@ class LagGemmaModule(nn.Module):
                 "multi-step forecasts would condition all samples on a shared mean trajectory."
             )
 
-        self.model = LagGemmaModel(**self.model_kwargs)
+        self.model = TailDartModel(**self.model_kwargs)
         self.loss = loss
         self.aug_prob = aug_prob
         self.freq_mask_rate = freq_mask_rate

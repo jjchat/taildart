@@ -23,8 +23,8 @@ from torch.nn import functional as F
 
 from gluonts.torch.distributions import DistributionOutput
 
-from src.model.base_module import LagForecastModelBase 
-from src.model.rope_norm import ( 
+from taildart.model.base_module import TailDartModelBase 
+from taildart.model.rope_norm import ( 
     LlamaDynamicNTKScalingRotaryEmbedding,
     LlamaLinearScalingRotaryEmbedding,
     LlamaRotaryEmbedding,
@@ -34,7 +34,7 @@ from src.model.rope_norm import (
 
 
 @dataclass
-class LagGemmaConfig:
+class TailDartConfig:
     feature_size: int
     block_size: int
     n_layer: int
@@ -53,8 +53,8 @@ class LagGemmaConfig:
     rms_norm_eps: float = 1e-6
 
 
-class LagGemmaMLP(nn.Module):
-    def __init__(self, config: LagGemmaConfig) -> None:
+class TailDartMLP(nn.Module):
+    def __init__(self, config: TailDartConfig) -> None:
         super().__init__()
         self.gate_proj = nn.Linear(config.hidden_size, config.intermediate_size, bias=False)
         self.up_proj = nn.Linear(config.hidden_size, config.intermediate_size, bias=False)
@@ -65,8 +65,8 @@ class LagGemmaMLP(nn.Module):
         return output, x.new_zeros(())
 
 
-class LagGemmaMoE(nn.Module):
-    def __init__(self, config: LagGemmaConfig) -> None:
+class TailDartMoE(nn.Module):
+    def __init__(self, config: TailDartConfig) -> None:
         super().__init__()
         if int(config.moe_num_experts) < 2:
             raise ValueError("`moe_num_experts` must be >= 2 in MoE-only mode.")
@@ -76,7 +76,7 @@ class LagGemmaMoE(nn.Module):
         self.top_k = int(config.moe_top_k)
         self.router_jitter_noise = float(config.moe_router_jitter_noise)
         self.router = nn.Linear(config.hidden_size, self.num_experts, bias=False)
-        self.experts = nn.ModuleList([LagGemmaMLP(config) for _ in range(self.num_experts)])
+        self.experts = nn.ModuleList([TailDartMLP(config) for _ in range(self.num_experts)])
         self.last_router_indices: Optional[torch.Tensor] = None
         self.last_router_probs: Optional[torch.Tensor] = None
         self.last_tokens_per_expert: Optional[torch.Tensor] = None
@@ -122,13 +122,13 @@ class LagGemmaMoE(nn.Module):
 
 
 FFN_REGISTRY = {
-    "dense": LagGemmaMLP,
-    "moe": LagGemmaMoE,
+    "dense": TailDartMLP,
+    "moe": TailDartMoE,
 }
 
 
-class LagGemmaAttention(nn.Module):
-    def __init__(self, config: LagGemmaConfig) -> None:
+class TailDartAttention(nn.Module):
+    def __init__(self, config: TailDartConfig) -> None:
         super().__init__()
         self.num_heads = config.num_heads
         self.num_kv_heads = config.num_kv_heads
@@ -246,11 +246,11 @@ class LagGemmaAttention(nn.Module):
         return self.o_proj(y)
 
 
-class LagGemmaBlock(nn.Module):
-    def __init__(self, config: LagGemmaConfig) -> None:
+class TailDartBlock(nn.Module):
+    def __init__(self, config: TailDartConfig) -> None:
         super().__init__()
         self.pre_attention_layernorm = RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
-        self.self_attn = LagGemmaAttention(config)
+        self.self_attn = TailDartAttention(config)
         self.post_attention_layernorm = RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         self.pre_mlp_layernorm = RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         self.post_mlp_layernorm = RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
@@ -268,7 +268,7 @@ class LagGemmaBlock(nn.Module):
         return x, aux_loss
 
 
-class LagGemmaModel(LagForecastModelBase):
+class TailDartModel(TailDartModelBase):
     def __init__(
         self,
         context_length: int,
@@ -283,27 +283,27 @@ class LagGemmaModel(LagForecastModelBase):
         time_feat: bool = True,
         dropout: float = 0.0,
         ffn_type: str = "dense",
-        gemma_hidden_size: int = 144,
-        gemma_intermediate_size: int = 576,
-        gemma_num_heads: int = 8,
-        gemma_num_kv_heads: int = 4,
-        gemma_head_dim: int = 18,
-        gemma_rms_norm_eps: float = 1e-6,
+        taildart_hidden_size: int = 144,
+        taildart_intermediate_size: int = 576,
+        taildart_num_heads: int = 8,
+        taildart_num_kv_heads: int = 4,
+        taildart_head_dim: int = 18,
+        taildart_rms_norm_eps: float = 1e-6,
         moe_num_experts: int = 3,
         moe_top_k: int = 1,
         moe_router_jitter_noise: float = 0.0,
         moe_aux_loss_weight: float = 0.01,
         **_: dict,
     ) -> None:
-        hidden_size = gemma_hidden_size
-        num_heads = gemma_num_heads
-        head_dim = gemma_head_dim
+        hidden_size = taildart_hidden_size
+        num_heads = taildart_num_heads
+        head_dim = taildart_head_dim
         if hidden_size != num_heads * head_dim:
             raise ValueError(
-                f"Gemma hidden size ({hidden_size}) must equal num_heads ({num_heads}) * head_dim ({head_dim})."
+                f"TailDart hidden size ({hidden_size}) must equal num_heads ({num_heads}) * head_dim ({head_dim})."
             )
-        num_kv_heads = gemma_num_kv_heads
-        intermediate_size = gemma_intermediate_size
+        num_kv_heads = taildart_num_kv_heads
+        intermediate_size = taildart_intermediate_size
 
         super().__init__(
             context_length=context_length,
@@ -318,7 +318,7 @@ class LagGemmaModel(LagForecastModelBase):
         self.ffn_type = str(ffn_type).strip().lower()
         if self.ffn_type not in FFN_REGISTRY:
             raise ValueError(f"`ffn_type` must be one of: {', '.join(sorted(FFN_REGISTRY))}.")
-        config = LagGemmaConfig(
+        config = TailDartConfig(
             feature_size=self.feature_size,
             block_size=max_context_length,
             n_layer=n_layer,
@@ -334,12 +334,12 @@ class LagGemmaModel(LagForecastModelBase):
             moe_aux_loss_weight=moe_aux_loss_weight,
             rope_scaling=rope_scaling,
             dropout=dropout,
-            rms_norm_eps=gemma_rms_norm_eps,
+            rms_norm_eps=taildart_rms_norm_eps,
         )
         self.transformer = nn.ModuleDict(
             dict(
                 wte=nn.Linear(config.feature_size, config.hidden_size, bias=False),
-                h=nn.ModuleList([LagGemmaBlock(config) for _ in range(config.n_layer)]),
+                h=nn.ModuleList([TailDartBlock(config) for _ in range(config.n_layer)]),
                 ln_f=RMSNorm(config.hidden_size, eps=config.rms_norm_eps),
             )
         )
@@ -368,7 +368,7 @@ class LagGemmaModel(LagForecastModelBase):
         """Return the latest routing totals for every MoE layer."""
         statistics = []
         for block in self.transformer.h:
-            if isinstance(block.ffn, LagGemmaMoE):
+            if isinstance(block.ffn, TailDartMoE):
                 layer_statistics = block.ffn.routing_statistics()
                 if layer_statistics is not None:
                     statistics.append(layer_statistics)

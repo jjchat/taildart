@@ -21,16 +21,16 @@ from pathlib import Path
 from typing import Any
 
 
-CHECKPOINT_MODEL_NAME = "lag-gemma" #"tail_dart" #
+CHECKPOINT_MODEL_NAME = "taildart"
 CHECKPOINT_VERSION = "v1"
 ESTIMATOR_LAGS_SEQ = ("Q", "M", "W", "D", "H", "T", "S")
 REQUIRED_CONFIG_KEYS = (
     "n_layer",
-    "gemma_hidden_size",
-    "gemma_num_heads",
-    "gemma_num_kv_heads",
-    "gemma_head_dim",
-    "gemma_intermediate_size",
+    "taildart_hidden_size",
+    "taildart_num_heads",
+    "taildart_num_kv_heads",
+    "taildart_head_dim",
+    "taildart_intermediate_size",
     "warmup",
     "decay",
 )
@@ -52,32 +52,32 @@ def _validate_model_config(model_cfg: dict[str, Any], *, require_gqa: bool) -> d
         raise ValueError(f"Model config missing required keys: {missing}")
 
     ffn_type = validated["ffn_type"]
-    gemma_num_heads = validated.get("gemma_num_heads")
-    gemma_num_kv_heads = validated.get("gemma_num_kv_heads")
-    gemma_hidden_size = validated.get("gemma_hidden_size")
-    gemma_head_dim = validated.get("gemma_head_dim")
+    taildart_num_heads = validated.get("taildart_num_heads")
+    taildart_num_kv_heads = validated.get("taildart_num_kv_heads")
+    taildart_hidden_size = validated.get("taildart_hidden_size")
+    taildart_head_dim = validated.get("taildart_head_dim")
     warmup = validated.get("warmup")
     decay = validated.get("decay")
 
     if ffn_type not in {"dense", "moe"}:
         raise ValueError("`ffn_type` must be one of: dense, moe.")
 
-    if gemma_num_heads is None:
-        raise ValueError("`gemma_num_heads` must be specified explicitly.")
-    if gemma_num_kv_heads is None:
-        raise ValueError("`gemma_num_kv_heads` must be specified explicitly.")
+    if taildart_num_heads is None:
+        raise ValueError("`taildart_num_heads` must be specified explicitly.")
+    if taildart_num_kv_heads is None:
+        raise ValueError("`taildart_num_kv_heads` must be specified explicitly.")
 
-    if gemma_num_heads is not None and gemma_num_kv_heads is not None:
-        if int(gemma_num_heads) % int(gemma_num_kv_heads) != 0:
-            raise ValueError("`gemma_num_heads` must be divisible by `gemma_num_kv_heads`.")
-    if require_gqa and gemma_num_kv_heads == gemma_num_heads:
+    if taildart_num_heads is not None and taildart_num_kv_heads is not None:
+        if int(taildart_num_heads) % int(taildart_num_kv_heads) != 0:
+            raise ValueError("`taildart_num_heads` must be divisible by `taildart_num_kv_heads`.")
+    if require_gqa and taildart_num_kv_heads == taildart_num_heads:
         raise ValueError(
-            "`gemma_num_kv_heads` must differ from `gemma_num_heads` to enforce GQA."
+            "`taildart_num_kv_heads` must differ from `taildart_num_heads` to enforce GQA."
         )
-    if gemma_hidden_size is not None and gemma_num_heads is not None and gemma_head_dim is not None:
-        if int(gemma_hidden_size) != int(gemma_num_heads) * int(gemma_head_dim):
+    if taildart_hidden_size is not None and taildart_num_heads is not None and taildart_head_dim is not None:
+        if int(taildart_hidden_size) != int(taildart_num_heads) * int(taildart_head_dim):
             raise ValueError(
-                "`gemma_hidden_size` must equal `gemma_num_heads * gemma_head_dim`."
+                "`taildart_hidden_size` must equal `taildart_num_heads * taildart_head_dim`."
             )
     if not isinstance(warmup, dict):
         raise ValueError("`warmup` must be an object/dict.")
@@ -185,12 +185,12 @@ def build_estimator_kwargs(
         "input_size": 1,
         "ffn_type": str(model_cfg.get("ffn_type", "dense")).strip().lower(),
         "n_layer": int(model_cfg.get("n_layer", 2)),
-        "gemma_hidden_size": int(model_cfg.get("gemma_hidden_size", 64)),
-        "gemma_intermediate_size": int(model_cfg.get("gemma_intermediate_size", 128)),
-        "gemma_num_heads": int(model_cfg.get("gemma_num_heads", 4)),
-        "gemma_num_kv_heads": int(model_cfg.get("gemma_num_kv_heads", 2)),
-        "gemma_head_dim": int(model_cfg.get("gemma_head_dim", 16)),
-        "gemma_rms_norm_eps": float(model_cfg.get("gemma_rms_norm_eps", 1e-6)),
+        "taildart_hidden_size": int(model_cfg.get("taildart_hidden_size", 64)),
+        "taildart_intermediate_size": int(model_cfg.get("taildart_intermediate_size", 128)),
+        "taildart_num_heads": int(model_cfg.get("taildart_num_heads", 4)),
+        "taildart_num_kv_heads": int(model_cfg.get("taildart_num_kv_heads", 2)),
+        "taildart_head_dim": int(model_cfg.get("taildart_head_dim", 16)),
+        "taildart_rms_norm_eps": float(model_cfg.get("taildart_rms_norm_eps", 1e-6)),
         "moe_num_experts": int(model_cfg.get("moe_num_experts", 3)),
         "moe_top_k": int(model_cfg.get("moe_top_k", 1)),
         "moe_aux_loss_weight": float(model_cfg.get("moe_aux_loss_weight", 0.01)),
@@ -287,13 +287,12 @@ def build_estimator(
     use_single_pass_sampling: bool | None = None,
     device: str,
 ):
-    """Construct a training-ready LagGemmaEstimator from shared config."""
+    """Construct a training-ready TailDartEstimator from shared config."""
     import torch
 
-    #from lag_gemma.gluon.estimator import LagGemmaEstimator
-    from src.gluon.estimator import LagGemmaEstimator
+    from taildart.gluon.estimator import TailDartEstimator
 
-    return LagGemmaEstimator(
+    return TailDartEstimator(
         **build_estimator_kwargs(
             model_cfg,
             prediction_length=prediction_length,

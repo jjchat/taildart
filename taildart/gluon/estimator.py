@@ -1,7 +1,7 @@
 # Copyright 2024 Arjun Ashok
 # Modifications Copyright 2026 Chiang Qin Zhi
 #
-# Modified as part of Lag-Gemma project (replacing LLaMA with Gemma backbone)
+# Modified as part of TailDart project (replacing LLaMA with Gemma backbone)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,8 +63,8 @@ from gluonts.transform import (
 )
 
 from data.dataset_loader import SingleInstanceSampler
-from src.gluon.torch_module import LagGemmaModule
-from src.model.distributions import (
+from taildart.gluon.torch_module import TailDartModule
+from taildart.model.distributions import (
     HansenSkewTOutput,
     JohnsonSUOutput,
     NormalInverseGaussianOutput,
@@ -85,7 +85,7 @@ TRAINING_INPUT_NAMES = PREDICTION_INPUT_NAMES + [
 ]
 
 # Forecast-head names exposed to the pretrain/finetune CLIs. Must mirror
-# `LagGemmaEstimator._resolve_distr_output`; a regression test in
+# `TailDartEstimator._resolve_distr_output`; a regression test in
 # tests/test_forecast_heads.py asserts every entry resolves.
 DISTR_OUTPUT_CHOICES = (
     "studentT",
@@ -376,8 +376,8 @@ class _PreloadedTrainingDataset(torch.utils.data.Dataset):
         return sample
 
 
-class LagGemmaEstimator:
-    """Pure-PyTorch estimator API for Lag-Gemma forecasting.
+class TailDartEstimator:
+    """Pure-PyTorch estimator API for TailDart forecasting.
 
     Most ``self.*`` attributes are constructor-time configuration cached for
     later use by data loaders, module construction, and checkpointing.
@@ -391,12 +391,12 @@ class LagGemmaEstimator:
         input_size: int = 1,
         ffn_type: str = "dense",
         n_layer: int = 1,
-        gemma_hidden_size: int = 144,
-        gemma_intermediate_size: int = 576,
-        gemma_num_heads: int = 8,
-        gemma_num_kv_heads: int = 4,
-        gemma_head_dim: int = 18,
-        gemma_rms_norm_eps: float = 1e-6,
+        taildart_hidden_size: int = 144,
+        taildart_intermediate_size: int = 576,
+        taildart_num_heads: int = 8,
+        taildart_num_kv_heads: int = 4,
+        taildart_head_dim: int = 18,
+        taildart_rms_norm_eps: float = 1e-6,
         moe_num_experts: int = 3,
         moe_top_k: int = 1,
         moe_aux_loss_weight: float = 0.01,
@@ -459,7 +459,7 @@ class LagGemmaEstimator:
         early_stopping_patience: int = 50,
         validate_at_steps: Optional[List[int]] = None,
         max_training_steps: Optional[int] = None,
-        checkpoint_model_name: str = "lag-gemma",
+        checkpoint_model_name: str = "taildart",
         checkpoint_version: str = "v1",
         checkpoint_run_date: Optional[str] = None,
         save_canonical_checkpoints: bool = True,
@@ -499,7 +499,7 @@ class LagGemmaEstimator:
 
         if max_lag is not None:
             print(
-                f"{ANSI_LABEL}[LagGemmaEstimator] max_lag={max_lag}{ANSI_RESET}: "
+                f"{ANSI_LABEL}[TailDartEstimator] max_lag={max_lag}{ANSI_RESET}: "
                 f"{len(self.lags_seq)} lag(s), effective max lag: {max(self.lags_seq, default=0)}"
             )
 
@@ -507,12 +507,12 @@ class LagGemmaEstimator:
         if self.ffn_type not in {"dense", "moe"}:
             raise ValueError("`ffn_type` must be one of: dense, moe.")
         self.n_layer = n_layer
-        self.gemma_hidden_size = gemma_hidden_size
-        self.gemma_intermediate_size = gemma_intermediate_size
-        self.gemma_num_heads = gemma_num_heads
-        self.gemma_num_kv_heads = gemma_num_kv_heads
-        self.gemma_head_dim = gemma_head_dim
-        self.gemma_rms_norm_eps = gemma_rms_norm_eps
+        self.taildart_hidden_size = taildart_hidden_size
+        self.taildart_intermediate_size = taildart_intermediate_size
+        self.taildart_num_heads = taildart_num_heads
+        self.taildart_num_kv_heads = taildart_num_kv_heads
+        self.taildart_head_dim = taildart_head_dim
+        self.taildart_rms_norm_eps = taildart_rms_norm_eps
         self.moe_num_experts = int(moe_num_experts)
         self.moe_top_k = int(moe_top_k)
         self.moe_aux_loss_weight = float(moe_aux_loss_weight)
@@ -819,12 +819,12 @@ class LagGemmaEstimator:
             "rope_scaling": self.rope_scaling,
             "time_feat": self.time_feat,
             "dropout": self.dropout,
-            "gemma_hidden_size": self.gemma_hidden_size,
-            "gemma_intermediate_size": self.gemma_intermediate_size,
-            "gemma_num_heads": self.gemma_num_heads,
-            "gemma_num_kv_heads": self.gemma_num_kv_heads,
-            "gemma_head_dim": self.gemma_head_dim,
-            "gemma_rms_norm_eps": self.gemma_rms_norm_eps,
+            "taildart_hidden_size": self.taildart_hidden_size,
+            "taildart_intermediate_size": self.taildart_intermediate_size,
+            "taildart_num_heads": self.taildart_num_heads,
+            "taildart_num_kv_heads": self.taildart_num_kv_heads,
+            "taildart_head_dim": self.taildart_head_dim,
+            "taildart_rms_norm_eps": self.taildart_rms_norm_eps,
             "moe_num_experts": self.moe_num_experts,
             "moe_top_k": self.moe_top_k,
             "moe_aux_loss_weight": self.moe_aux_loss_weight,
@@ -858,8 +858,8 @@ class LagGemmaEstimator:
             return
         scheduler.step()
 
-    def create_module(self, use_kv_cache: bool = False) -> LagGemmaModule:
-        module = LagGemmaModule(
+    def create_module(self, use_kv_cache: bool = False) -> TailDartModule:
+        module = TailDartModule(
             loss=self.loss,
             context_length=self.context_length,
             prediction_length=self.prediction_length,
@@ -1014,7 +1014,7 @@ class LagGemmaEstimator:
     def create_predictor(
         self,
         transformation: Transformation,
-        module: LagGemmaModule,
+        module: TailDartModule,
     ) -> PyTorchPredictor:
         prediction_splitter = self._create_instance_splitter("test")
         if self.time_feat:
@@ -1043,7 +1043,7 @@ class LagGemmaEstimator:
     def _save_checkpoint(
         self,
         path: str,
-        module: LagGemmaModule,
+        module: TailDartModule,
         optimizer: torch.optim.Optimizer,
         scheduler: Optional[_WarmupDecayScheduler],
         epoch: int,
@@ -1108,7 +1108,7 @@ class LagGemmaEstimator:
 
     def _evaluate_validation(
         self,
-        module: LagGemmaModule,
+        module: TailDartModule,
         validation_data: Dataset,
         *,
         validation_seed: int,

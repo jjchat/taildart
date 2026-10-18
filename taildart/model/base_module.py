@@ -26,7 +26,7 @@ from gluonts.torch.util import lagged_sequence_values, unsqueeze_expand
 from gluon_utils.scalers.robust_scaler import RobustScaler
 
 
-class LagForecastModelBase(nn.Module):
+class TailDartModelBase(nn.Module):
     """Shared lag-based preprocessing and probabilistic output projection."""
 
     def __init__(

@@ -28,7 +28,7 @@ from helpers.forecast_eval import (
     ensure_paths,
     listdataset,
     load_dataset_frame,
-    load_tail_dart_from_ckpt,
+    load_taildart_from_ckpt,
     macro_summary,
     materialize_forecast_results,
     run_forecasts_raw,
@@ -38,14 +38,14 @@ from helpers.forecast_eval import (
 from helpers.plotter import plot_metrics_by_asset_type, plot_metrics_heatmap_by_asset_type, plot_model_comparison_by_asset_type
 
 
-TAIL_DART_ROOT, PROJECT_ROOT = ensure_paths()
-print(TAIL_DART_ROOT)
+TAILDART_ROOT, PROJECT_ROOT = ensure_paths()
+print(TAILDART_ROOT)
 
-from src.training import load_model_config
+from taildart.training import load_model_config
 
 DEVICE            = "cuda"  # set to 'mps' on macbook runs
 BATCH_SIZE        = 8
-PREDICTION_LENGTH = 1 # 20 --> ValueError: use_single_pass_sampling=True is only valid for prediction_length=1;  multi-step forecasts would condition all samples on a shared mean trajectory. # one-step to mirror the tail_dart returns notebook
+PREDICTION_LENGTH = 1 # 20 --> ValueError: use_single_pass_sampling=True is only valid for prediction_length=1;  multi-step forecasts would condition all samples on a shared mean trajectory. # one-step to mirror the taildart returns notebook
 EVAL_NUM_SAMPLES  = 100
 CONTEXT_LENGTH    = 250
 HORIZON           = PREDICTION_LENGTH #1 #20
@@ -163,11 +163,11 @@ context_columns = [f"X_{i}" for i in range(CONTEXT_LENGTH)]
 ######################################################################################
 # Set the model from the checkpoint
 ######################################################################################
-base_ckpt_path    = TAIL_DART_ROOT / "final_checkpoints/best_dense_base_johnsonsu.ckpt"
-model_config_path = TAIL_DART_ROOT / "configs" / "tail_dart_dense_johnsonsu.json"
+base_ckpt_path    = TAILDART_ROOT / "final_checkpoints/taildart_dense_base_johnsonsu.ckpt"
+model_config_path = TAILDART_ROOT / "configs" / "taildart_dense_johnsonsu.json"
 model_cfg         = load_model_config(model_config_path, model_size="base") # ! ATTENTION ! model_size is manually set 
 
-estimator, module, predictor = load_tail_dart_from_ckpt(
+estimator, module, predictor = load_taildart_from_ckpt(
     ckpt_path=base_ckpt_path,
     prediction_length=PREDICTION_LENGTH,
     context_length=CONTEXT_LENGTH,
