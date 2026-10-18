@@ -45,14 +45,3 @@ name must be migrated before loading with this version.
 Before running, set `DEVICE` in the script for your machine (`cuda`, `mps`, or
 `cpu`). The script defaults to CUDA and demonstrates forecasting on a synthetic
 time series; replace that input with your own data as needed.
-
-## Verification
-
-Run the checkpoint and CPU forecasting regression tests from the repository root:
-
-```bash
-python -m unittest discover -s tests -v
-```
-
-These tests cover loading the bundled checkpoint through the public helper,
-reproducible CPU forecasts, and saving/reloading model outputs.

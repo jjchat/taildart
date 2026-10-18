@@ -85,8 +85,7 @@ TRAINING_INPUT_NAMES = PREDICTION_INPUT_NAMES + [
 ]
 
 # Forecast-head names exposed to the pretrain/finetune CLIs. Must mirror
-# `TailDartEstimator._resolve_distr_output`; a regression test in
-# tests/test_forecast_heads.py asserts every entry resolves.
+# `TailDartEstimator._resolve_distr_output`.
 DISTR_OUTPUT_CHOICES = (
     "studentT",
     "student_t",
