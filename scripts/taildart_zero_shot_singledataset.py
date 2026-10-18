@@ -50,6 +50,7 @@ EVAL_NUM_SAMPLES  = 100
 CONTEXT_LENGTH    = 250
 HORIZON           = PREDICTION_LENGTH #1 #20
 TRAIN_SIZE        = 800
+DEMO_FREQ         = "D"
 ######################################################################################
 
 ######################################################################################
@@ -65,12 +66,12 @@ def create_synthetic_series(
     seed: int = 42,
 ) -> pd.DataFrame:
     """
-    Synthetic return-like series with seasonal structure, autocorrelation,
-    and random shocks.
+    Daily synthetic return-like series with seasonal structure,
+    autocorrelation, and random shocks.
     """
     rng = np.random.default_rng(seed)
 
-    dates = pd.bdate_range("2020-01-01", periods=n_observations)
+    dates = pd.date_range("2020-01-01", periods=n_observations, freq=DEMO_FREQ)
     noise = rng.normal(loc=0.0, scale=0.01, size=n_observations)
     
     values = np.zeros(n_observations)
@@ -341,7 +342,7 @@ def forecasts_to_dataframe(
 forecasts = run_forecasts_from_context_windows(predictor=predictor,
                                                windows_df=test_windows_df,
                                                context_columns=context_columns,
-                                               freq="D",# "B",
+                                               freq=DEMO_FREQ,
                                                item_id_col="item_id",
                                                forecast_start_col="forecast_start",
                                                #num_samples=NUM_SAMPLES,
