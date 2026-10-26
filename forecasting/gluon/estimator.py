@@ -63,8 +63,8 @@ from gluonts.transform import (
 )
 
 from data.dataset_loader import SingleInstanceSampler
-from taildart.gluon.torch_module import TailDartModule
-from taildart.model.distributions import (
+from forecasting.gluon.torch_module import TailDartModule
+from forecasting.model.distributions import (
     HansenSkewTOutput,
     JohnsonSUOutput,
     NormalInverseGaussianOutput,

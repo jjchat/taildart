@@ -40,7 +40,7 @@ from data.augmentations.augmentations import (
     WindowSlice,
     WindowWarp,
 )
-from taildart.model.taildart_module import TailDartModel
+from forecasting.model.taildart_module import TailDartModel
 
 
 class TailDartModule(nn.Module):

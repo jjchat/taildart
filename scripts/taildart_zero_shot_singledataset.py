@@ -41,7 +41,7 @@ from helpers.plotter import plot_metrics_by_asset_type, plot_metrics_heatmap_by_
 TAILDART_ROOT, PROJECT_ROOT = ensure_paths()
 print(TAILDART_ROOT)
 
-from taildart.training import load_model_config
+from forecasting.training import load_model_config
 
 DEVICE            = "cuda"  # set to 'mps' on macbook runs
 BATCH_SIZE        = 8

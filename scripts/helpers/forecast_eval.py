@@ -20,7 +20,7 @@ for p in (TAILDART_ROOT, PROJECT_ROOT):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
-from taildart.training import build_estimator_kwargs
+from forecasting.training import build_estimator_kwargs
 
 DEFAULT_METRIC_COLUMNS = ["mae", "mse", "rmse", "mape", "smape", "mase", "tilde_q"]
 METRIC_EPS = np.finfo(float).eps
@@ -583,7 +583,7 @@ def load_taildart_from_ckpt(
     """Load a predictor from a pretrained checkpoint for inference-only eval."""
     import torch
 
-    from taildart.gluon.estimator import TailDartEstimator
+    from forecasting.gluon.estimator import TailDartEstimator
 
     ckpt = Path(ckpt_path).expanduser().resolve()
     if not ckpt.is_file():
@@ -624,7 +624,7 @@ def finetune_taildart_from_ckpt(
     """Fine-tune a model from pretrained checkpoint for few-shot adaptation."""
     import torch
 
-    from taildart.gluon.estimator import TailDartEstimator
+    from forecasting.gluon.estimator import TailDartEstimator
 
     ckpt = Path(ckpt_path).expanduser().resolve()
     if not ckpt.is_file():
@@ -705,7 +705,7 @@ def _coerce_forecast_start(value) -> pd.Timestamp:
 
 def _compute_tilde_q_metric(actual: np.ndarray, pred: np.ndarray) -> float:
     """Compute TILDE-Q using the bundled implementation."""
-    from taildart.utils.tilde_q import compute_tilde_q
+    from forecasting.utils.tilde_q import compute_tilde_q
 
     return float(compute_tilde_q(y_true=actual, y_pred=pred))
 
@@ -746,7 +746,7 @@ def distribution_statistics(distribution, observed: np.ndarray) -> pd.DataFrame:
     from gluonts.torch.distributions import AffineTransformed
     from scipy import stats
 
-    from taildart.model.distributions import JohnsonSU, Mixture
+    from forecasting.model.distributions import JohnsonSU, Mixture
 
     if not isinstance(distribution, AffineTransformed):
         raise TypeError(
@@ -1048,7 +1048,7 @@ def compute_metrics(
     All returned metrics are error or loss quantities, so lower values are
     better for ``mae``, ``mse``, ``rmse``, ``mape``, ``smape``, ``mase``, and
     ``tilde_q``. ``tilde_q`` is lower-is-better because it is computed from
-    ``tildeq_loss(...)`` in ``taildart.utils.tilde_q``.
+    ``tildeq_loss(...)`` in ``forecasting.utils.tilde_q``.
     """
     actual = np.asarray(actual, dtype=float).reshape(-1)
     pred = np.asarray(pred, dtype=float).reshape(-1)

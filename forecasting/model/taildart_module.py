@@ -23,8 +23,8 @@ from torch.nn import functional as F
 
 from gluonts.torch.distributions import DistributionOutput
 
-from taildart.model.base_module import TailDartModelBase 
-from taildart.model.rope_norm import ( 
+from forecasting.model.base_module import TailDartModelBase 
+from forecasting.model.rope_norm import ( 
     LlamaDynamicNTKScalingRotaryEmbedding,
     LlamaLinearScalingRotaryEmbedding,
     LlamaRotaryEmbedding,

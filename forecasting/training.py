@@ -290,7 +290,7 @@ def build_estimator(
     """Construct a training-ready TailDartEstimator from shared config."""
     import torch
 
-    from taildart.gluon.estimator import TailDartEstimator
+    from forecasting.gluon.estimator import TailDartEstimator
 
     return TailDartEstimator(
         **build_estimator_kwargs(

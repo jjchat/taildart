@@ -31,16 +31,17 @@ From the repository root, run the zero-shot forecasting script:
 python scripts/taildart_zero_shot_singledataset.py
 ```
 
-The implementation is the `taildart` Python package. Imports use paths such as
-`taildart.gluon.estimator.TailDartEstimator`, and model configuration keys use the
+The implementation is the `forecasting` Python package. Imports use paths such as
+`forecasting.gluon.estimator.TailDartEstimator`, and model configuration keys use the
 `taildart_` prefix. The default configuration is
 `configs/taildart_dense_johnsonsu.json`; the bundled pretrained checkpoint is
 `final_checkpoints/taildart_dense_base_johnsonsu.ckpt`.
 
-The bundled checkpoint has been migrated to the `taildart` package and parameter
-names, so it loads directly without the former package alias. Model weights and
-architecture are preserved. Additional checkpoints saved under the old package
-name must be migrated before loading with this version.
+The bundled checkpoint has been migrated to the `forecasting` package, so it loads
+directly without the former package alias. Model weights, architecture, and
+`taildart_` parameter names are preserved. Additional checkpoints with serialized
+references to the former `taildart` package must be migrated before loading with
+this version.
 
 Before running, set `DEVICE` in the script for your machine (`cuda`, `mps`, or
 `cpu`). The script defaults to CUDA and demonstrates forecasting on a synthetic
