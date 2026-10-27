@@ -26,11 +26,23 @@ This project uses `mamba` for environment and package management. Ensure you hav
 
 ## Running the Script
 
-Once your environment is set up and your checkpoints are in place, you can run the zero-shot forecasting script directly:
+From the repository root, run the zero-shot forecasting script:
 ```bash
-cd scripts
+python scripts/taildart_zero_shot_singledataset.py
 ```
 
-```bash
-python tail_dart_zero_shot_singledataset.py
-```
+The implementation is the `forecasting` Python package. Imports use paths such as
+`forecasting.gluon.estimator.TailDartEstimator`, and model configuration keys use the
+`taildart_` prefix. The default configuration is
+`configs/taildart_dense_johnsonsu.json`; the bundled pretrained checkpoint is
+`final_checkpoints/taildart_dense_base_johnsonsu.ckpt`.
+
+The bundled checkpoint has been migrated to the `forecasting` package, so it loads
+directly without the former package alias. Model weights, architecture, and
+`taildart_` parameter names are preserved. Additional checkpoints with serialized
+references to the former `taildart` package must be migrated before loading with
+this version.
+
+Before running, set `DEVICE` in the script for your machine (`cuda`, `mps`, or
+`cpu`). The script defaults to CUDA and demonstrates forecasting on a synthetic
+time series; replace that input with your own data as needed.

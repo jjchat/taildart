@@ -1,4 +1,4 @@
-"""Reusable plotting helpers for Lag-Gemma notebooks."""
+"""Reusable plotting helpers for TailDart notebooks."""
 
 from __future__ import annotations
 
@@ -20,15 +20,9 @@ DEFAULT_MODEL_COLORS = {
     "supervised": "#4C72B0", "zero_shot": "#DD8452", "one_shot": "#55A859"
 }
 
-DISPLAY_MODEL_NAMES = {
-    "Lag-Gemma": "TailDART",
-    "Lag-Gemma-MoE": "TailDART-MoE",
-}
-
-
 def _display_model_name(model: str) -> str:
     """Return the public model name used in figure text."""
-    return DISPLAY_MODEL_NAMES.get(model, model)
+    return model
 
 
 def plot_metrics_by_asset_type(

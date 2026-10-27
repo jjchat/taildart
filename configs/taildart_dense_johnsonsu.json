@@ -1,0 +1,48 @@
+{
+  "shared": {
+    "ffn_type": "dense",
+    "time_feat": true,
+    "aug_prob": 0.5,
+    "freq_mask_rate": 0.5,
+    "freq_mixing_rate": 0.25,
+    "distr_output": "johnsonsu",
+    "scaling": "robust",
+    "early_stopping_patience": 50,
+    "dropout": 0.0,
+    "taildart_rms_norm_eps": 1e-06,
+    "warmup": {
+      "name": "none",
+      "epochs": 0
+    },
+    "decay": {
+      "name": "none",
+      "args": {}
+    }
+  },
+  "model_sizes": {
+    "small": {
+      "n_layer": 4,
+      "taildart_num_kv_heads": 4,
+      "taildart_num_heads": 8,
+      "taildart_head_dim": 16,
+      "taildart_hidden_size": 128,
+      "taildart_intermediate_size": 384
+    },
+    "base": {
+      "n_layer": 6,
+      "taildart_num_kv_heads": 6,
+      "taildart_num_heads": 12,
+      "taildart_head_dim": 16,
+      "taildart_hidden_size": 192,
+      "taildart_intermediate_size": 576
+    },
+    "large": {
+      "n_layer": 8,
+      "taildart_num_kv_heads": 8,
+      "taildart_num_heads": 16,
+      "taildart_head_dim": 16,
+      "taildart_hidden_size": 256,
+      "taildart_intermediate_size": 768
+    }
+  }
+}

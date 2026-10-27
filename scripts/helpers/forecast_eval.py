@@ -14,13 +14,13 @@ from gluonts.evaluation.backtest import make_evaluation_predictions
 from gluonts.evaluation.metrics import calculate_seasonal_error
 from gluonts.evaluation.metrics import mase as gluonts_mase
 
-TAIL_DART_ROOT = Path(__file__).resolve().parents[2]
-PROJECT_ROOT = TAIL_DART_ROOT.parent
-for p in (TAIL_DART_ROOT, PROJECT_ROOT):
+TAILDART_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = TAILDART_ROOT.parent
+for p in (TAILDART_ROOT, PROJECT_ROOT):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
-from src.training import build_estimator_kwargs
+from forecasting.training import build_estimator_kwargs
 
 DEFAULT_METRIC_COLUMNS = ["mae", "mse", "rmse", "mape", "smape", "mase", "tilde_q"]
 METRIC_EPS = np.finfo(float).eps
@@ -37,8 +37,8 @@ class ForecastResult:
 
 
 def ensure_paths() -> tuple[Path, Path]:
-    """Return (tail_dart_root, project_root) and inject into sys.path."""
-    return TAIL_DART_ROOT, PROJECT_ROOT
+    """Return (taildart_root, project_root) and inject into sys.path."""
+    return TAILDART_ROOT, PROJECT_ROOT
 
 
 def _dataset_frequency(name: str) -> str:
@@ -570,7 +570,7 @@ def listdataset(entries: Iterable[dict], freq: str) -> ListDataset:
     return ListDataset(list(entries), freq=freq)
 
 
-def load_tail_dart_from_ckpt(
+def load_taildart_from_ckpt(
     ckpt_path: str | Path,
     prediction_length: int,
     context_length: int,
@@ -583,14 +583,14 @@ def load_tail_dart_from_ckpt(
     """Load a predictor from a pretrained checkpoint for inference-only eval."""
     import torch
 
-    from src.gluon.estimator import LagGemmaEstimator
+    from forecasting.gluon.estimator import TailDartEstimator
 
     ckpt = Path(ckpt_path).expanduser().resolve()
     if not ckpt.is_file():
         raise FileNotFoundError(f"Checkpoint not found: {ckpt}")
     
     # Use build_estimator_kwargs here instead of build_estimator(): checkpoint eval needs config-to-estimator translation without training-only defaults like run_dir/max_epochs.
-    estimator = LagGemmaEstimator(
+    estimator = TailDartEstimator(
         **build_estimator_kwargs(
             model_config or {},
             prediction_length=prediction_length,
@@ -607,7 +607,7 @@ def load_tail_dart_from_ckpt(
     return estimator, module, predictor
 
 
-def finetune_tail_dart_from_ckpt(
+def finetune_taildart_from_ckpt(
     ckpt_path: str | Path,
     train_ds: ListDataset,
     val_ds: ListDataset,
@@ -624,7 +624,7 @@ def finetune_tail_dart_from_ckpt(
     """Fine-tune a model from pretrained checkpoint for few-shot adaptation."""
     import torch
 
-    from src.gluon.estimator import LagGemmaEstimator
+    from forecasting.gluon.estimator import TailDartEstimator
 
     ckpt = Path(ckpt_path).expanduser().resolve()
     if not ckpt.is_file():
@@ -632,7 +632,7 @@ def finetune_tail_dart_from_ckpt(
 
     run_dir.mkdir(parents=True, exist_ok=True)
 
-    estimator = LagGemmaEstimator(
+    estimator = TailDartEstimator(
         **build_estimator_kwargs(
             model_config or {},
             prediction_length=prediction_length,
@@ -704,11 +704,8 @@ def _coerce_forecast_start(value) -> pd.Timestamp:
 
 
 def _compute_tilde_q_metric(actual: np.ndarray, pred: np.ndarray) -> float:
-    """Import and compute TILDE-Q lazily so notebook path setup can happen first."""
-    try:
-        from src.utils.tilde_q import compute_tilde_q
-    except ImportError:
-        from utils.tilde_q import compute_tilde_q
+    """Compute TILDE-Q using the bundled implementation."""
+    from forecasting.utils.tilde_q import compute_tilde_q
 
     return float(compute_tilde_q(y_true=actual, y_pred=pred))
 
@@ -749,7 +746,7 @@ def distribution_statistics(distribution, observed: np.ndarray) -> pd.DataFrame:
     from gluonts.torch.distributions import AffineTransformed
     from scipy import stats
 
-    from src.model.distributions import JohnsonSU, Mixture 
+    from forecasting.model.distributions import JohnsonSU, Mixture
 
     if not isinstance(distribution, AffineTransformed):
         raise TypeError(
@@ -1051,7 +1048,7 @@ def compute_metrics(
     All returned metrics are error or loss quantities, so lower values are
     better for ``mae``, ``mse``, ``rmse``, ``mape``, ``smape``, ``mase``, and
     ``tilde_q``. ``tilde_q`` is lower-is-better because it is computed from
-    ``tildeq_loss(...)`` in ``src.utils.tilde_q``.
+    ``tildeq_loss(...)`` in ``forecasting.utils.tilde_q``.
     """
     actual = np.asarray(actual, dtype=float).reshape(-1)
     pred = np.asarray(pred, dtype=float).reshape(-1)
@@ -1097,6 +1094,9 @@ def compute_metrics(
     )
     try:
         tilde_q = _compute_tilde_q_metric(actual=actual, pred=pred)
+    except ImportError:
+        # Packaging/dependency errors must not silently erase an entire metric.
+        raise
     except Exception:
         tilde_q = np.nan
 
@@ -1262,10 +1262,10 @@ __all__ = [
     "aggregate_metrics_by_asset_type",
     "build_chunk_holdout_entries",
     "ensure_paths",
-    "finetune_tail_dart_from_ckpt",
+    "finetune_taildart_from_ckpt",
     "few_shot_split_for_holdout",
     "listdataset",
-    "load_tail_dart_from_ckpt",
+    "load_taildart_from_ckpt",
     "load_dataset_frame",
     "macro_summary",
     "make_train_and_val_from_train_entries",

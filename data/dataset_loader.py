@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Barebones generalized dataset loader for Lag-Gemma + GluonTS.
+"""Barebones generalized dataset loader for TailDart + GluonTS.
 
 This module is intentionally minimal and easy to customize.
 """
